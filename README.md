@@ -6,8 +6,8 @@ JDC
 |--- JdcDataAnalysis.py  
 |--- JdcMonitor.py  
 |--- JdcQQbot  
-|     |--JdcBotPlugin.py  
-|     |-- __init__.py  
+|      |--JdcBotPlugin.py  
+|      |-- __init__.py  
 |--- main.py  
   
 天色已晚，明天再弄
