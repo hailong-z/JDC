@@ -81,25 +81,6 @@ class JdCloud():
         res = requests.get(routerAccountInfo_url, headers=headers)
         return res.json()
 
-    # 待开发项目
-    def _(self):
-        """
-        获取设备名称
-
-        尚无多台设备，待有多台设备之后再进行研究
-        """
-        listAllUserDevices_url = "https://gw.smart.jd.com/f/service/listAllUserDevices?plat=ios&hard_platform=iPhone11,2" \
-                                 "&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd"
-
-        headers_2 = {
-            "pin": self.pin,
-            "appkey": self.appkey,
-            "tgt": self.tgt,
-            "accesskey": self.accesskey,
-            "Authorization": self.Authorization,
-        }
-
-        res2 = requests.post(listAllUserDevices_url, headers=headers_2)
 
     def result_search(self, json_result, key_name):
         """从返回结果中的json文本中查找想要的文本结果"""
