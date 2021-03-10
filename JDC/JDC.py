@@ -9,12 +9,11 @@ import datetime
 urllib3.disable_warnings()
 
 class JdCloud():
-    def __init__(self, pin, appkey, tgt, accesskey, Authorization, wskey, jdmt_sign, jdmt_appkey,UserAgent):
+    def __init__(self, pin, appkey, tgt, accesskey, wskey, jdmt_sign, jdmt_appkey,UserAgent):
         self.pin = pin
         self.appkey = appkey
         self.tgt =tgt
         self.accesskey = accesskey
-        self.Authorization = Authorization
         self.wskey = wskey
         self.jdmt_sign = jdmt_sign
         self.jdmt_appkey = jdmt_appkey
@@ -36,7 +35,7 @@ class JdCloud():
         }
         return headers
 
-    def usersHeadersInfo(self):
+    def usersHeadersInfo(self, au):
         """
         获取路由器在线设备信息
 
@@ -44,7 +43,7 @@ class JdCloud():
         """
         headers = {
             "Content-Type": "application/json",
-            "Authorization": self.Authorization,
+            "Authorization": au,
             "accesskey": self.accesskey,
             "tgt": self.tgt,
             "appkey": self.appkey,
@@ -53,16 +52,15 @@ class JdCloud():
         }
         return headers
 
-    def routertHeaders(self):
+    def routertHeaders(self, au):
         """
-        获取路由器状态,不要问我为什么有两个headers
-        有时候用同一个Authorization进行认证会出问题，最好是抓两个，虽然本质上都一样。
+        获取路由器状态
 
         :return: headers
         """
         headers = {
             "Content-Type": "application/json",
-            "Authorization": self.Authorization,
+            "Authorization": au,
             "accesskey": self.accesskey,
             "tgt": self.tgt,
             "appkey": self.appkey,
@@ -71,89 +69,23 @@ class JdCloud():
         }
         return headers
 
-    def usersInfoJs(self):
+    def usersInfoJs(self, feed_id):
         """
         好像是所有的链接用户设备的js吧
-        js_text 这个变量非常重要，记得变量内不该空格的地方别空格
 
         :return: json
         """
-        js_text = {"feed_id":"70307160958616371","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
+        js_text = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
         return json.dumps(js_text, separators=(',', ':'))
 
-    def routerInfoJs(self):
+    def routerInfoJs(self, feed_id):
         """
         路由器运行状态信息
 
         :return: json
         """
-        js_text = {"feed_id":"70307160958616371","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
+        js_text = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
         return json.dumps(js_text, separators=(',', ':'))
-
-    def routerInfoAU(self):
-        """
-        路由器运行状态信息的AU
-        没错，这又是一个Authorization，主要是在做的过程中不敢删代码，怕删到最后自己都不知道怎么回事了，后面再优化吧
-
-        :return:AU
-        """
-        AU = ""
-        return AU
-
-    def listAllUserDevicestotal(self) -> 1:
-        """
-        今日设备总积分
-
-        :return:
-               {"code":200,
-               "requestId":"c0som6242fv1fjmfr2badap8hk0c7gkp",
-               "error":null,
-               "result":
-                      {"todayDate":"2021-02-25",
-                      "pointInfos":[
-                             {"mac":"DCD87C0B99B1",
-                             "todayPointIncome":202,
-                             "allPointIncome":7154
-                             }
-                             ],
-                             "pageInfo":{
-                                    "currentPage":1,
-                                    "pageSize":15,
-                                    "totalRecord":1,
-                                    "totalPage":1
-                                    }
-                      }
-               }
-        """
-        listAllUserDevicestotal_url = f"https://router-app-api.jdcloud.com/v1/regions/cn-north-1/todayPointDetail?sortField=today_point&sortDirection=DESC&pageSize=15&currentPage=1&time=${time.time() * 1000}"
-        headers = self.accountHeaders()
-        res1 = requests.get(listAllUserDevicestotal_url, headers=headers,verify=False)
-        return res1.json()
-
-    def routerAccountInfo(self) -> 1:
-        """
-        显示未兑换积分
-
-        查询所有账户信息和积分
-        :return:
-               {"code":200,
-               "requestId":"c0so9hhoi1ob652fcupit1so9rvfw6ui",
-               "error":null,
-               "result":
-                      {"accountInfo":
-                             {"mac":"DCD87C0B99B1",
-                             "amount":1203, #总积分
-                             "bindAccount":"jd_5800b69c9ac12",
-                             "recentExpireAmount":77, #将有77积分会过期
-                             "recentExpireTime":1645221835000 #过期的时间
-                             }
-                      }
-               }
-        """
-        routerAccountInfo_url = "https://router-app-api.jdcloud.com/v1/regions/cn-north-1/routerAccountInfo?mac=XXXXXXX"#这里mac需要抓自己设备的
-        headers = self.accountHeaders()
-        res = requests.get(routerAccountInfo_url, headers=headers,verify=False)
-        return res.json()
 
     def todayPointAll(self) -> 1:
         """
@@ -201,30 +133,28 @@ class JdCloud():
         return res.json()
 
     # 待开发项目
-    def listAllUserDevices(self) -> 1:
+    def listAllUserDevices(self, feed_id, au) -> 1:
         """
                 获取设备名称
 
         尚无多台设备，待有多台设备之后再进行研究
         :return: -1
         """
-        listAllUserDevices_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=xxxx&channel=jd HTTP/1.1"#这个也需要自己抓自己的
-
-        js = self.usersInfoJs()
-        headers = self.usersHeadersInfo()
+        listAllUserDevices_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
+        js = self.usersInfoJs(feed_id=feed_id)
+        headers = self.usersHeadersInfo(au=au)
         res = requests.post(listAllUserDevices_url, headers=headers,data=js,verify=False)
         return res.json()
 
-    def deviceInfo(self) -> 1:
+    def deviceInfo(self,feed_id, au) -> 1:
         """
-        设备运行状态
-        查看cpu，mac，upload，download，等信息
+        设备运行状态--查看cpu，mac，upload，download，等信息
 
         :return:-1
         """
-        deviceInfo_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=xxxx&channel=jd HTTP/1.1"#对这个也要自己抓
-        js = self.routerInfoJs()
-        headers = self.routertHeaders()
+        deviceInfo_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
+        js = self.routerInfoJs(feed_id)
+        headers = self.routertHeaders(au)
         res = requests.post(deviceInfo_url, headers=headers, data=js, verify=False)
         return res.json()
 
@@ -252,9 +182,6 @@ class Switches(JdCloud):
 
         :return:
         """
-        routerAccountInfo_result = self.routerAccountInfo()
-        listAllUserDevicestotal_result = self.listAllUserDevicestotal()
-
         todayPointAll_result = self.todayPointAll()
         todayPointAll_list64 =[]
         todayPointAll_list32 = []
@@ -284,13 +211,13 @@ class Switches(JdCloud):
         return result_dic
 
 
-    def getDeviceInfo(self):
+    def getDeviceInfo(self, feed_id, au):
         """
         获得路由器的运行信息
 
         :return: result_dic
         """
-        deviceInfo = self.deviceInfo()
+        deviceInfo = self.deviceInfo(feed_id=feed_id, au=au)
         deviceInfo_dic = deviceInfo["result"]
         deviceInfo_dic = eval(deviceInfo_dic)["streams"][0]["current_value"]
         deviceInfo_js = json.loads(deviceInfo_dic)
@@ -302,12 +229,12 @@ class Switches(JdCloud):
             "mem": self.result_search(deviceInfo_js, "$..mem"),
             "UPload": self.result_search(deviceInfo_js, "$..upload"),
             "Download": self.result_search(deviceInfo_js, "$..download"),
-            "OnlineTime": datetime.timedelta(seconds=self.result_search(deviceInfo_js, "$..onlineTime"))
+            "OnlineTime": str(datetime.timedelta(seconds=int(self.result_search(deviceInfo_js, "$..onlineTime"))))
         }
 
         return result_dic
 
-    def getUsersInfo(self):
+    def getUsersInfo(self, feed_id, au):
         """
         获取所有连接到路由器的设备
             1，熟悉设备上线通知，下线通知。
@@ -316,7 +243,7 @@ class Switches(JdCloud):
             ['A44519ED3EC5', '0', '妈',          '2.4G', '2021-02-28 20:29', '0', '1', '-89', 'Redmi8A-Redmi', '1', '0', '0'],
             ['A483E752688E', '0', 'MacBook-Pro', '2.4G', '2021-02-28 14:26', '0', '1', '-92', 'MacBook-Pro', '1', '0', '0'],
             ['00E04C78F2E7', '14', 'MacBook-Pro', 'wire', '2021-02-28 12:26', '0', '1', '0', 'MacBook-Pro', '1', '0', '0'],
-            ['7EBC8BCF57AF', '0', '钟海龙的ipadpro', '5G', '2021-02-28 12:19', '0', '1', '-86', '', '1', '0', '0'],
+            ['7EBC8BCF57AF', '0', 'ipadpro', '5G', '2021-02-28 12:19', '0', '1', '-86', '', '1', '0', '0'],
             离线状态
              ['D462EA121B51', '0', 'HONOR_9X-1278feffe1de9b4c', '2.4G', '2021-02-19 18:41', '2021-02-19 18:41', '1', '0', 'HONOR_9X-1278feffe1de9b4c', '1', '0', '0'],
             ['EE7BB675BCF6', '0', 'nova_6_SE-d25ab8c4b2333ff', '2.4G', '2021-02-19 17:58', '2021-02-19 17:58', '1', '0', 'nova_6_SE-d25ab8c4b2333ff', '1', '0', '0'],
@@ -326,7 +253,7 @@ class Switches(JdCloud):
 
         :return:
         """
-        userInfo = self.listAllUserDevices()
+        userInfo = self.listAllUserDevices(feed_id=feed_id, au=au)
         deviceInfo_dic = userInfo["result"]
         deviceInfo_dic = eval(deviceInfo_dic)["streams"][0]["current_value"]
         deviceInfo_dic = eval(deviceInfo_dic)["data"]["device_list"]
