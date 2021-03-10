@@ -87,7 +87,7 @@ class JdCloud():
         js_text = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
         return json.dumps(js_text, separators=(',', ':'))
 
-    def todayPointAll(self) -> 1:
+    def todayPointAll(self) ->:
         """
         今日设备总积分
 
@@ -132,13 +132,11 @@ class JdCloud():
         res = requests.get(pinTotalAvailPoint_url, headers=headers,verify=False)
         return res.json()
 
-    # 待开发项目
-    def listAllUserDevices(self, feed_id, au) -> 1:
+    def listAllUserDevices(self, feed_id, au):
         """
                 获取设备名称
 
-        尚无多台设备，待有多台设备之后再进行研究
-        :return: -1
+        :return: json
         """
         listAllUserDevices_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
         js = self.usersInfoJs(feed_id=feed_id)
@@ -146,11 +144,11 @@ class JdCloud():
         res = requests.post(listAllUserDevices_url, headers=headers,data=js,verify=False)
         return res.json()
 
-    def deviceInfo(self,feed_id, au) -> 1:
+    def deviceInfo(self,feed_id, au):
         """
         设备运行状态--查看cpu，mac，upload，download，等信息
 
-        :return:-1
+        :return: json
         """
         deviceInfo_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
         js = self.routerInfoJs(feed_id)
