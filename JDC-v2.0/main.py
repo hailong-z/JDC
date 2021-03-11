@@ -1,11 +1,7 @@
 from JDC import Switches
 from JDC import JdCloud
 import time
-"""
-64g运行状态:{"feed_id":"248161614328763030","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
-32g设备连接情况:{"feed_id":"703071609586163712","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
 
-"""
 
 if __name__ =="__main__":
     pin = "" 
@@ -15,40 +11,27 @@ if __name__ =="__main__":
     wskey = ""
     jdmt_sign = ""
     jdmt_appkey = ""
-    Authorization= "smart xxxxxxxxxxxxx"
     UserAgent = "JBOXAppModule_Example/2.7.1 (iPhone; iOS 14.4; Scale/3.00)(JDCLOUD-APP; iOS/2.7.1/2)"
 
     switches = Switches(pin=pin,appkey=appkey,tgt=tgt,accesskey=accesskey,wskey=wskey,jdmt_sign=jdmt_sign,jdmt_appkey=jdmt_appkey,UserAgent=UserAgent)
-
     getAccountInfo = switches.getAccountInfo()
-    
-    
-    deviceDict = {
-        “”“
-        64g运行状态:{"feed_id":"xxxxxx","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
-        32g设备连接情况:{"feed_id":"xxxxxx","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
-        deviceDict 里面存的是对应版本的feed_id,和authorization以及对应的操作，现在做如下讲解：
-            {
-                feed_id : 这个id要自己抓取，feedID在app数据包中对应的名称叫做device_id
-                command : command 字面理解就是命令，没错，对比一下32与64的command很容易发现只有最后key=cmd中字符串不同,不同的字符串代表执行对应的不同的命令。
-            }
-        "Jdc32" : ["feed_id", "authorization"],
-        最好是抓两个不同的备用，我也不知道为什么，现在还在逆向app中。
-        也就是分开且对应抓取
-        ”“”
-        "Jdc32" : ["xxxxxxxxxx", "smart xxxx"],
-        "Jdc64" : ["xxxxxxxxxx", "smart xxxx"]
-    }
-    for key in deviceDict.keys():
+    feed_id = ""
+    Authorization= {
+    """
+    64g运行状态:{"feed_id":"2481616143283030","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
+    32g设备连接情况:{"feed_id":"7030716095861712","command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
+    ------------------------------------------
+    这里需要单独解释一下这个字典的含义。
 
-        feed_id = deviceDict[key][0]
-        au = deviceDict[key][1]
-        getUsersInfo = switches.getUsersInfo(feed_id=feed_id, au=au)
-        deviceInfo = switches.getDeviceInfo(feed_id=feed_id, au=au)
-        print(deviceInfo)
-
-
-
+    由于在获取路由器信息的时候，所有的数据都通过一条相同的url请求数据，所以采用了json来区分参数。例如：get_device_list就是获取列表
+    对于json参数，需要在其对应的https封包内找到authorization
+    """
+        "statusDetailAU" : "smart xxxxx",
+        
+        "deviceListAU" : "smart xxxxx"
+                    }
+    getUsersInfo = switches.getUsersInfo(feed_id=feed_id, au=Authorization['deviceListAU'])
+    deviceInfo = switches.getDeviceInfo(feed_id=feed_id, au = Authorization['statusDetailAU'])
 
 #     while True:
 #         """
