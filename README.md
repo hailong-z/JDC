@@ -10,7 +10,8 @@ JDC-v2.1<br>
 >>④监控路由器子设备的情况（上线提醒，下线提醒等)<br>
 >>⑤对接QQ机器人<br>
 >>在QQ机器人上运行JDC-v2.1展示收益：<br>
->>![Uploading IMG_1E434D366175-1.jpeg…]()
+>>![IMG_1E434D366175-1](https://user-images.githubusercontent.com/61647893/110804034-c379cf00-82ba-11eb-8e8f-6edc170469c2.jpeg)
+
 
 
 JDC-v2.0
