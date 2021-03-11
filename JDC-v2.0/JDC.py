@@ -58,8 +58,8 @@ class JdCloud():
 
         :return: json
         """
-        js_text = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
-        return json.dumps(js_text, separators=(',', ':'))
+        jsText = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_device_list\"\n}"}]}
+        return json.dumps(jsText, separators=(',', ':'))
 
     def routerInfoJs(self, feed_id):
         """
@@ -67,8 +67,18 @@ class JdCloud():
 
         :return: json
         """
-        js_text = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
-        return json.dumps(js_text, separators=(',', ':'))
+        jsText = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"get_router_status_detail\"\n}"}]}
+        return json.dumps(jsText, separators=(',', ':'))
+
+    def routerStatusInfoJs(self, feed_id):
+        """
+        路由器的配置信息
+
+        :param feed_id:str
+        :return: json
+        """
+        jsText = {"feed_id":feed_id,"command":[{"stream_id":"SetParams","current_value":"{\n  \"cmd\" : \"jdcplugin_opt.get_pcdn_status\"\n}"}]}
+        return json.dumps(jsText, separators=(',', ':'))
 
     def todayPointAll(self):
         """
@@ -127,97 +137,113 @@ class JdCloud():
         js = self.usersInfoJs(feed_id=feed_id)
         headers = self.routertHeaders(au=au)
         res = requests.post(listAllUserDevices_url, headers=headers,data=js,verify=False)
-        print(headers)
-        print(js)
+
         return res.json()
 
-    def deviceInfo(self,feed_id, au):
+    def deviceInfo(self, feed_id, au):
         """
         设备运行状态--查看cpu，mac，upload，download，等信息
 
-        :return:-1
+        :return:json
         """
-        deviceInfo_url = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
+        deviceInfoUrl = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
         js = self.routerInfoJs(feed_id=feed_id)
         headers = self.routertHeaders(au=au)
-        res = requests.post(deviceInfo_url, headers=headers, data=js, verify=False)
+        res = requests.post(deviceInfoUrl, headers=headers, data=js, verify=False)
         return res.json()
 
+    def routerStatusInfo(self, feed_id, au):
+        """
+        插件信息查询
+
+        :param feed_id:str
+        :return: json
+        """
+        routerStatusInfoUrl = "https://gw.smart.jd.com/f/service/controlDevice?plat=ios&hard_platform=iPhone11,2&app_version=6.5.5&plat_version=14.4&device_id=a3f5c988dda4cddf1c0cbdd47d336c9c99054854&channel=jd HTTP/1.1"
+        js = self.routerStatusInfoJs(feed_id=feed_id)
+        headers = self.routertHeaders(au=au)
+        res = requests.post(routerStatusInfoUrl, headers=headers, data=js, verify=False)
+        return res.json()
 
 
 
 class Switches(JdCloud):
 
-    def result_search(self, json_result, key_name):
+    def result_search(self, jsonResult, key_name):
         """
         从返回结果中的json文本中查找想要的文本结果
 
-        :param json_result: json
+        :param jsonResult: json
         :param key_name: key
         :return: result
         """
-        return jsonpath.jsonpath(json_result, key_name)[0]
+        return jsonpath.jsonpath(jsonResult, key_name)[0]
 
-    def result_searches(self, json_result, key_name):
-        return jsonpath.jsonpath(json_result, key_name)
+    def result_searches(self, jsonResult, key_name):
+        return jsonpath.jsonpath(jsonResult, key_name)
 
     def getAccountInfo(self):
         """
         每日财务报告
 
+        这里只写了只有一台的情况，多台的情况需要重写，我没有多台设备不知道多台是怎么样的情况
+
         :return:
         """
-        todayPointAll_result = self.todayPointAll()
-        todayPointAll_list64 =[]
-        todayPointAll_list32 = []
-        date = ''
+        todayPointAllResult = self.todayPointAll()
+        todayPointAllList64 = {}
         for key in "mac", "todayDate", "todayPointIncome", "allPointIncome" :
-            result = self.result_searches(todayPointAll_result,f"$..{key}")
-            if len(result) > 1 :
-                todayPointAll_list32.append(result[1])
-                todayPointAll_list64.append(result[0])
-            else:
-                date = result[0]
-
-        pinTotalAvailPoint_result = self.pinTotalAvailPoint()
-
-        result_dic = {
-            "todayDate": date,  # 当前日期
-            "todayPointIncome": todayPointAll_list64[1]+todayPointAll_list32[1],  # 当天收入
-            "allPointIncome": todayPointAll_list64[2]+ todayPointAll_list32[2],  # 历史总收入
-            "totalAvailPoint": self.result_search(pinTotalAvailPoint_result, "$..totalAvailPoint"), # 当前总剩余
-            "32g_today": todayPointAll_list32[1],
-            "32g_total": todayPointAll_list32[2],
-            "64g_today": todayPointAll_list64[1],
-            "64g_total": todayPointAll_list64[2],
+            result = self.result_searches(todayPointAllResult,f"$..{key}")
+            todayPointAllList64[key] = result[0]
+        pinTotalAvailPointResult = self.pinTotalAvailPoint()
+        resultDic = {
+            "todayDate": todayPointAllList64['todayDate'],  # 当前日期
+            "todayPointIncome": todayPointAllList64['todayPointIncome'],  # 当天收入
+            "allPointIncome": todayPointAllList64['allPointIncome'],  # 历史总收入
+            "totalAvailPoint": self.result_search(pinTotalAvailPointResult, "$..totalAvailPoint"), # 当前剩余
         }
-        for i in result_dic:
-            print(i+":"+str(result_dic[i]))
-        return result_dic
+        return resultDic
 
+    def infoDataParser(self, deviceInfo):
+        """
+        解析返回值
+
+        :param deviceInfo:
+        :return: str
+        """
+        try:
+            deviceInfoDic = deviceInfo["result"]
+            deviceInfoDic = eval(deviceInfoDic)["streams"][0]["current_value"]
+            return deviceInfoDic
+        except Exception:
+            return "-1"
 
     def getDeviceInfo(self, feed_id, au):
         """
         获得路由器的运行信息
 
-        :return: result_dic
+        :return: resultDic
         """
+        def _time(seconds):
+            m, s = divmod(seconds, 60)
+            h, m = divmod(m, 60)
+            return "%d小时%02d分钟%02d秒" % (h, m, s)
         deviceInfo = self.deviceInfo(feed_id=feed_id, au=au)
-        deviceInfo_dic = deviceInfo["result"]
-        deviceInfo_dic = eval(deviceInfo_dic)["streams"][0]["current_value"]
-        deviceInfo_js = json.loads(deviceInfo_dic)
-
-        result_dic = {
-            "Mac": self.result_search(deviceInfo_js, "$..mac"),
-            "Rom": self.result_search(deviceInfo_js, "$..rom"),
-            "Cpu": self.result_search(deviceInfo_js, "$..cpu"),
-            "mem": self.result_search(deviceInfo_js, "$..mem"),
-            "UPload": self.result_search(deviceInfo_js, "$..upload"),
-            "Download": self.result_search(deviceInfo_js, "$..download"),
-            "OnlineTime": str(datetime.timedelta(seconds=int(self.result_search(deviceInfo_js, "$..onlineTime"))))
-        }
-
-        return result_dic
+        deviceInfoDic = self.infoDataParser(deviceInfo=deviceInfo)
+        if deviceInfoDic != -1:
+            deviceInfo_js = json.loads(deviceInfoDic)
+            resultDic = {
+                "Mac": self.result_search(deviceInfo_js, "$..mac"),
+                "Rom": self.result_search(deviceInfo_js, "$..rom"),
+                "Cpu": self.result_search(deviceInfo_js, "$..cpu"),
+                "mem": self.result_search(deviceInfo_js, "$..mem"),
+                "UPload": self.result_search(deviceInfo_js, "$..upload"),
+                "Download": self.result_search(deviceInfo_js, "$..download"),
+                "OnlineTime": _time(seconds=int(self.result_search(deviceInfo_js, "$..onlineTime")))
+            }
+            return resultDic
+        else:
+            return -1
 
     def getUsersInfo(self, feed_id, au):
         """
@@ -239,14 +265,28 @@ class Switches(JdCloud):
         :return:list
         """
         userInfo = self.listAllUserDevices(feed_id=feed_id, au=au)
-        deviceInfo_dic = userInfo["result"]
-        deviceInfo_dic = eval(deviceInfo_dic)["streams"][0]["current_value"]
-        deviceInfo_dic = eval(deviceInfo_dic)["data"]["device_list"]
-        return deviceInfo_dic
+        deviceInfoDic = self.infoDataParser(userInfo)
+        if deviceInfoDic != -1:
+            deviceInfoDic = eval(deviceInfoDic)["data"]["device_list"]
+            return deviceInfoDic
+        else:
+            return -1
 
-
-
-
+    def getRouterStatusInfo(self, feed_id, au):
+        routerStatusInfo = self.routerStatusInfo(feed_id=feed_id, au=au)
+        routerStatusInfoDic = self.infoDataParser(routerStatusInfo)
+        if routerStatusInfoDic != -1:
+            routerStatusInfoJs = json.loads(routerStatusInfoDic)
+            pcdnList = {
+                "插件状态" : self.result_search(routerStatusInfoJs, "$..status"),
+                "插件别称" : self.result_search(routerStatusInfoJs, "$..nickname"),
+                "插件名称" : self.result_search(routerStatusInfoJs, "$..name"),
+                "缓存大小" : self.result_search(routerStatusInfoJs, "$..cache_size")
+                #{'插件状态': '正常', '插件别称': '插件A', '插件名称': 'pcdniqiyi', '缓存大小': '7858212'}9点13
+            }
+            return pcdnList
+        else:
+            return -1
 
 
 
